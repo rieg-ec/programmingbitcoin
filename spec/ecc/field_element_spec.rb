@@ -17,19 +17,6 @@ RSpec.describe ECC::FieldElement do
     end
   end
 
-  describe "#pow" do
-    it "returns correct results" do
-      expect(described_class.pow(3, 2)).to eq(9)
-      expect(described_class.pow(3, 0)).to eq(1)
-      expect(described_class.pow(3, 3)).to eq(27)
-      expect(described_class.pow(0, 1)).to eq(0)
-    end
-
-    it "raises error" do
-      expect { described_class.pow(0, 0) }.to raise_error
-    end
-  end
-
   describe "#==" do
     context "when comparing different elements" do
       let(:other_element) { described_class.new(5, 13) }
