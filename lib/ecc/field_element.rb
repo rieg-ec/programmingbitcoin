@@ -1,3 +1,5 @@
+require_relative "secp256k1_constants"
+
 module ECC
   class FieldElement
     attr_reader :num, :prime
@@ -19,6 +21,10 @@ module ECC
 
     def zero?
       @num.zero?
+    end
+
+    def even?
+      @num.even?
     end
 
     def -@
@@ -78,11 +84,15 @@ module ECC
       self * inverse
     end
 
-    def **(exponent)
+    def **(other)
       # taken from https://github.com/jgmontoya/programmingbitcoin-ruby/blob/master/lib/ecc/field_element.rb#:~:text=end-,def%20**(exponent),-positive_exponent%20%3D%20exponent
-      positive_exponent = exponent % (@prime - 1)
+      positive_exponent = other % (@prime - 1)
       num = @num.pow(positive_exponent, @prime)
       self.class.new(num, @prime)
+    end
+
+    def sqrt
+      self**((Secp256k1Constants::P + 1) / 4)
     end
   end
 end

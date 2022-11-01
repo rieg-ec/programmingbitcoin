@@ -78,4 +78,9 @@ RSpec.describe ECC::Point do
       pending "add some examples to (or delete) #{__FILE__}"
     end
   end
+
+  describe "#verify" do
+    # use openSSL for examples
+    # raise NotImplementedError
+  end
 end
