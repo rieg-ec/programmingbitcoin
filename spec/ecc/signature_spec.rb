@@ -17,31 +17,29 @@ RSpec.describe ECC::Signature do
   end
 
   describe "#==" do
-    raise NotImplementedError
-
-    it "returns true on equal r and s signatures" do
-      r = 0x37206a0610995c58074999cb9767b87af4c4978db68c06e8e6e81d282047a7c6
-      s = 0x8ca63759c1157ebeaec0d03cecca119fc9a75bf8e6d0fa65c841c8e2738cdaec
-      sig1 = described_class.new(r, s)
-      sig2 = described_class.new(r, s)
-      expect(sig1 == sig2).to be true
-    end
-
-    it "returns false on different r" do
-      r = 0x37206a0610995c58074999cb9767b87af4c4978db68c06e8e6e81d282047a7c6
-      s = 0x8ca63759c1157ebeaec0d03cecca119fc9a75bf8e6d0fa65c841c8e2738cdaec
-      sig1 = described_class.new(r, s)
-      sig2 = described_class.new(r + 1, s)
-      expect(sig1 == sig2).to be false
-    end
-
-    it "returns false on different s" do
-      r = 0x37206a0610995c58074999cb9767b87af4c4978db68c06e8e6e81d282047a7c6
-      s = 0x8ca63759c1157ebeaec0d03cecca119fc9a75bf8e6d0fa65c841c8e2738cdaec
-      sig1 = described_class.new(r, s)
-      sig2 = described_class.new(r, s + 1)
-      expect(sig1 == sig2).to be false
-    end
+    # it "returns true on equal r and s signatures" do
+    #   r = 0x37206a0610995c58074999cb9767b87af4c4978db68c06e8e6e81d282047a7c6
+    #   s = 0x8ca63759c1157ebeaec0d03cecca119fc9a75bf8e6d0fa65c841c8e2738cdaec
+    #   sig1 = described_class.new(r, s)
+    #   sig2 = described_class.new(r, s)
+    #   expect(sig1 == sig2).to be true
+    # end
+    #
+    # it "returns false on different r" do
+    #   r = 0x37206a0610995c58074999cb9767b87af4c4978db68c06e8e6e81d282047a7c6
+    #   s = 0x8ca63759c1157ebeaec0d03cecca119fc9a75bf8e6d0fa65c841c8e2738cdaec
+    #   sig1 = described_class.new(r, s)
+    #   sig2 = described_class.new(r + 1, s)
+    #   expect(sig1 == sig2).to be false
+    # end
+    #
+    # it "returns false on different s" do
+    #   r = 0x37206a0610995c58074999cb9767b87af4c4978db68c06e8e6e81d282047a7c6
+    #   s = 0x8ca63759c1157ebeaec0d03cecca119fc9a75bf8e6d0fa65c841c8e2738cdaec
+    #   sig1 = described_class.new(r, s)
+    #   sig2 = described_class.new(r, s + 1)
+    #   expect(sig1 == sig2).to be false
+    # end
   end
 
   describe "#der" do
@@ -56,13 +54,11 @@ RSpec.describe ECC::Signature do
   end
 
   describe "#self.parse" do
-    raise NotImplementedError
-
-    it "returns the proper Signature object" do
-      r = 0x37206a0610995c58074999cb9767b87af4c4978db68c06e8e6e81d282047a7c6
-      s = 0x8ca63759c1157ebeaec0d03cecca119fc9a75bf8e6d0fa65c841c8e2738cdaec
-      sig = described_class.new(r, s)
-      expect(described_class.parse(sig.der)).to eq sig
-    end
+    # it "returns the proper Signature object" do
+    #   r = 0x37206a0610995c58074999cb9767b87af4c4978db68c06e8e6e81d282047a7c6
+    #   s = 0x8ca63759c1157ebeaec0d03cecca119fc9a75bf8e6d0fa65c841c8e2738cdaec
+    #   sig = described_class.new(r, s)
+    #   expect(described_class.parse(sig.der)).to eq sig
+    # end
   end
 end

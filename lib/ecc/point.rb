@@ -14,8 +14,6 @@ module ECC
       return if x.nil? && y.nil?
 
       raise ArgumentError, "#{x}, #{y} is not on the curve" if y**2 != x**3 + a * x + b
-      # rescue ArgumentError
-      #   binding.pry
     end
 
     def to_s

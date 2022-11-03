@@ -4,7 +4,8 @@ module Helpers
   module Encoding
     BASE58_ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 
-    def to_bytes(integer, bytes, endianness = "big")
+    # convert a number to a byte string
+    def self.to_bytes(integer, bytes, endianness = "big")
       byte_array = [0] * bytes
       integer.digits(256).each_with_index do |byte, index|
         byte_array[index] = byte
@@ -13,17 +14,18 @@ module Helpers
       byte_array.pack("c*")
     end
 
-    def from_bytes(bytes, endianness = "big")
+    # convert a byte string to a number
+    def self.from_bytes(bytes, endianness = "big")
       bytes = bytes.unpack("C*")
       bytes.reverse! if endianness == "big"
       bytes.map.with_index { |byte, index| byte * 256**index }.sum
     end
 
-    def from_hex_to_bytes(hex)
+    def self.from_hex_to_bytes(hex)
       [hex.strip].pack("H*")
     end
 
-    def base58_encode(str)
+    def self.base58_encode(str)
       count = 0
       str.each_char { |c| count += 1 if c == 0 }
       prefix = "1" * count
@@ -38,11 +40,11 @@ module Helpers
       prefix + result
     end
 
-    def base58_encode_checksum(bytes)
+    def self.base58_encode_checksum(bytes)
       base58_encode(bytes + Helpers::Hash.hash256(bytes).slice(0, 4))
     end
 
-    def encode_varint(integer)
+    def self.encode_varint(integer)
       if integer < 0xfd
         to_bytes(integer, 1)
       elsif integer < 0x10000

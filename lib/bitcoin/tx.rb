@@ -2,6 +2,8 @@ require_relative "../helpers/hash"
 require_relative "../helpers/io"
 require_relative "../helpers/encoding"
 require_relative "fetcher"
+require_relative "./tx_in"
+require_relative "./tx_out"
 
 module Bitcoin
   class Tx
@@ -37,8 +39,8 @@ module Bitcoin
       io = Helpers::IO.new(stream)
 
       version = io.read_le_int32
-      tx_ins = io.read_var_int.times.map { TxIn.parse(io) }
-      tx_outs = io.read_var_int.times.map { TxOut.parse(io) }
+      tx_ins = io.read_varint.times.map { TxIn.parse(io) }
+      tx_outs = io.read_varint.times.map { TxOut.parse(io) }
       locktime = io.read_le_int32
 
       new(version, tx_ins, tx_outs, locktime, testnet)

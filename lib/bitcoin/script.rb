@@ -7,6 +7,8 @@ module Bitcoin
     include Helpers::Encoding
     include Helpers::Script
 
+    attr_reader :opcodes
+
     def initialize(opcodes = [])
       @opcodes = opcodes
       @stack = []
@@ -17,21 +19,23 @@ module Bitcoin
     end
 
     def self.parse(io)
-      length = io.read_var_int
+      length = io.read_varint
       opcodes = []
       count = 0
       while count < length
         opcode = io.read_le_int8
         count += 1
         if opcode >= 1 && opcode <= 75
-          opcodes << io.read_le(opcode)
+          opcodes.append(io.read(opcode))
           count += opcode
         elsif opcode == 76
-          opcodes << io.read(io.read_le_int8)
-          count += 1
+          length = io.read_le_int8
+          opcodes.append(io.read(length))
+          count += length + 1
         elsif opcode == 77
-          opcodes << io.read(io.read_le_int16)
-          count += 2
+          length = io.read_le_int16
+          opcodes.append(io.read(length))
+          count += length + 2
         else
           opcodes << opcode
         end
@@ -57,9 +61,9 @@ module Bitcoin
       @z = z
       while opcodes.length > 0
         opcode = opcodes.shift
-        if opcode.is_a?(Integer)
-          if respond_to?(Helpers::Script::OP_CODES[opcode])
-            send(Helpers::Script::OP_CODES[opcode])
+        if Helpers::Script.valid_opcode?(opcode)
+          if Helpers::Encoding.implemented_opcode?(opcode)
+            send(Helpers::Script.opcode_method[opcode])
           else
             raise "invalid opcode: #{opcode}"
           end
