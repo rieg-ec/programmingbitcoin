@@ -28,9 +28,31 @@ module ECC
       "\x30#{Helpers::Encoding.to_bytes(result.length, 1)}#{result}"
     end
 
-    def self.parse
-      # @TODO
-      raise NotImplementedError
+    # parses a DER signature
+    def self.parse(der)
+      # first byte is 0x30
+      raise "bad der: #{der}" if der[0] != "\x30"
+
+      # next byte is the length of the signature
+      length = der[1].unpack1("C")
+      # next length bytes are the signature
+      signature = der[2..length + 1]
+      # first byte is market byte 0x02
+      raise "Signature not in DER format" if signature[0] != "\x02"
+
+      # next byte is the length of r
+      r_length = signature[1].unpack1("C")
+      # next r_length bytes are r
+      r = Helpers::Encoding.from_bytes(signature[2, r_length])
+      # next byte is marker byte 0x02
+      raise "Signature not in DER format" if signature[r_length + 2] != "\x02"
+
+      # next byte is the length of s
+      s_length = signature[r_length + 3].unpack1("C")
+      # next s_length bytes are s
+      s = Helpers::Encoding.from_bytes(signature[r_length + 4, s_length])
+
+      new(r, s)
     end
 
     private
