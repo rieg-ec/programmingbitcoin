@@ -18,37 +18,47 @@ module Bitcoin
       self.class.new(@opcodes + other.opcodes)
     end
 
+    def to_s
+      @opcodes.map do |opcode|
+        if opcode.is_a?(Integer)
+          Helpers::Script::OP_CODES[opcode]
+        else
+          Helpers::Encoding.from_bytes_to_hex(opcode)
+        end
+      end.join(" ")
+    end
+
     def self.parse(io)
       length = io.read_varint
       opcodes = []
       count = 0
       while count < length
-        opcode = io.read_le_int8
+        opcode = io.read_int8
         count += 1
         if opcode >= 1 && opcode <= 75
           opcodes.append(io.read(opcode))
           count += opcode
         elsif opcode == 76
-          length = io.read_le_int8
-          opcodes.append(io.read(length))
-          count += length + 1
+          data_length = io.read_int8
+          opcodes.append(io.read_le(data_length))
+          count += data_length + 1
         elsif opcode == 77
-          length = io.read_le_int16
-          opcodes.append(io.read(length))
-          count += length + 2
+          data_length = io.read_le_int16
+          opcodes.append(io.read(data_length))
+          count += data_length + 2
         else
           opcodes << opcode
         end
       end
 
-      raise "script length mismatch" if count != length
+      raise "script length mismatch: count = #{count} and length = #{length}" if count != length
 
       new(opcodes)
     end
 
     def serialize
       result = raw_serialize
-      length = encode_varint(result.length)
+      length = Helpers::Encoding.encode_varint(result.length)
       "#{length}#{result}"
     end
 
@@ -77,22 +87,29 @@ module Bitcoin
       true
     end
 
+    def self.p2pkh_script(hash160)
+      # OP_DUP OP_HASH160 <hash160> OP_EQUALVERIFY OP_CHECKSIG
+      new([118, 169, hash160, 136, 172])
+    end
+
     private
 
     def raw_serialize
       result = ""
       @opcodes.each do |opcode|
         if opcode.is_a?(Integer)
-          result << to_bytes(opcode, 1, "little")
+          result << Helpers::Encoding.to_bytes(opcode, 1)
         else
           if opcode.length < 75
-            result << to_bytes(opcode.length, 1, "little")
+            result << Helpers::Encoding.to_bytes(opcode.length, 1)
           elsif opcode.length < 256
+            # OP_PUSHDATA1 + length
             result << "\x4c"
-            result << to_bytes(opcode.length, 1, "little")
+            result << Helpers::Encoding.to_bytes(opcode.length, 1)
           elsif opcode.length <= 520
+            # OP_PUSHDATA2 + length
             result << "\x4d"
-            result << to_bytes(opcode.length, 2, "little")
+            result << Helpers::Encoding.to_bytes(opcode.length, 2, "little")
           else
             raise "invalid opcode"
           end

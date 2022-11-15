@@ -18,6 +18,7 @@ module ECC
     end
 
     def sign(m_hash)
+      m_hash = Helpers::Encoding.from_bytes(m_hash) if m_hash.is_a?(String)
       k = deterministic_k(m_hash)
       r = (k * S256Point::G).x.num
       k_inv = k.pow(Secp256k1Constants::N - 2, Secp256k1Constants::N)

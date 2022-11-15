@@ -25,6 +25,14 @@ module Helpers
       [hex.strip].pack("H*")
     end
 
+    def self.from_bytes_to_hex(bytes)
+      bytes.unpack1("H*")
+    end
+
+    def self.from_hex_to_int(hex)
+      from_bytes(from_hex_to_bytes(hex))
+    end
+
     def self.base58_encode(str)
       count = 0
       str.each_char { |c| count += 1 if c == 0 }
@@ -40,22 +48,36 @@ module Helpers
       prefix + result
     end
 
+    def self.decode_base58(str)
+      num = 0
+      str.each_char do |char|
+        num *= 58
+        num += BASE58_ALPHABET.index(char)
+      end
+      num
+    end
+
     def self.base58_encode_checksum(bytes)
       base58_encode(bytes + Helpers::Hash.hash256(bytes).slice(0, 4))
     end
 
     def self.encode_varint(integer)
-      if integer < 0xfd
+      if integer < 0xfd # 253
         to_bytes(integer, 1)
-      elsif integer < 0x10000
-        to_bytes(0xfd, 1) + to_bytes(integer, 2)
-      elsif integer < 0x100000000
-        to_bytes(0xfe, 1) + to_bytes(integer, 4)
-      elsif integer < 0x10000000000000000
-        to_bytes(0xff, 1) + to_bytes(integer, 8)
+      elsif integer < 0x10000 # 65536
+        to_bytes(0xfd, 1) + to_bytes(integer, 2, "little")
+      elsif integer < 0x100000000 # 4294967296
+        to_bytes(0xfe, 1) + to_bytes(integer, 4, "little")
+      elsif integer < 0x10000000000000000 # 18446744073709551616
+        to_bytes(0xff, 1) + to_bytes(integer, 8, "little")
       else
         raise "Integer too large"
       end
+    end
+
+    def self.read_varint(stream)
+      io = Helpers::IO.new(stream)
+      io.read_varint
     end
   end
 end

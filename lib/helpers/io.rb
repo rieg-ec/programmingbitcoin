@@ -8,13 +8,14 @@ module Helpers
 
     def initialize(io)
       @io = io
+      @io = StringIO.new(io) if io.is_a?(String)
     end
 
     def read_le(length)
       @io.read(length).reverse
     end
 
-    def read_le_int8
+    def read_int8
       @io.read(1).unpack1("C")
     end
 
@@ -34,11 +35,11 @@ module Helpers
       r = @io.read(1).unpack1("C")
 
       case r
-      when 0xfd
+      when 0xfd # 253
         read_le_int16
-      when 0xfe
+      when 0xfe # 254
         read_le_int32
-      when 0xff
+      when 0xff # 255
         read_le_int64
       else
         r

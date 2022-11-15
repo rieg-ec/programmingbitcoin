@@ -1,7 +1,6 @@
 require_relative "../helpers/hash"
 require_relative "../helpers/io"
 require_relative "../helpers/encoding"
-require_relative "fetcher"
 require_relative "./tx_in"
 require_relative "./tx_out"
 
@@ -9,7 +8,12 @@ module Bitcoin
   class Tx
     include Helpers::Encoding
 
-    def initialize(version, tx_ins, tx_outs, locktime, testnet: false)
+    SIGHASH_ALL = 1
+
+    attr_accessor :testnet
+    attr_reader :version, :tx_ins, :tx_outs, :locktime
+
+    def initialize(version:, tx_ins:, tx_outs:, locktime:, testnet: false)
       @version = version
       @tx_ins = tx_ins
       @tx_outs = tx_outs
@@ -19,23 +23,22 @@ module Bitcoin
     end
 
     def id
-      hash.unpack1("H*") # @TODO not sure if little or big endian
+      hash.reverse.unpack1("H*")
     end
 
     def to_s
-      tx_ins = @tx_ins.map(&:to_s).join
-      tx_outs = @tx_outs.map(&:to_s).join
+      tx_ins = @tx_ins.map(&:to_s).join("\n")
+      tx_outs = @tx_outs.map(&:to_s).join("\n")
 
-      "version: #{@version}\n" +
-        "tx_ins: #{tx_ins}\n" +
-        "tx_outs: #{tx_outs}\n" +
+      "tx: #{id}\n" +
+        "version: #{@version}\n" +
+        "tx_ins:\n#{tx_ins}\n" +
+        "tx_outs:\n#{tx_outs}\n" +
         "locktime: #{@locktime}\n" +
         "testnet: #{@testnet}\n"
     end
 
     def self.parse(stream, testnet: false)
-      # @TODO what kind of streams are we expecting?
-      # this fails if stream is a plain String object
       io = Helpers::IO.new(stream)
 
       version = io.read_le_int32
@@ -43,7 +46,13 @@ module Bitcoin
       tx_outs = io.read_varint.times.map { TxOut.parse(io) }
       locktime = io.read_le_int32
 
-      new(version, tx_ins, tx_outs, locktime, testnet)
+      new(
+        version: version,
+        tx_ins: tx_ins,
+        tx_outs: tx_outs,
+        locktime: locktime,
+        testnet: testnet
+      )
     end
 
     def fee
@@ -56,20 +65,64 @@ module Bitcoin
       tx_ins = @tx_ins.map(&:serialize).join
       tx_outs = @tx_outs.map(&:serialize).join
 
-      "#{to_bytes(@version, 4, "little")}" +
-        "#{encode_varint(tx_ins.length)}#{tx_ins}" +
-        "#{encode_varint(tx_outs.length)}#{tx_outs}" +
-        "#{to_bytes(@locktime, 4, "little")}"
+      "#{Helpers::Encoding.to_bytes(@version, 4, "little")}" +
+        "#{Helpers::Encoding.encode_varint(@tx_ins.length)}#{tx_ins}" +
+        "#{Helpers::Encoding.encode_varint(@tx_outs.length)}#{tx_outs}" +
+        "#{Helpers::Encoding.to_bytes(@locktime, 4, "little")}"
+    end
+
+    def verify
+      return false if fee.negative?
+
+      @tx_ins.each_with_index do |_tx_in, index|
+        return false unless verify_input(index)
+      end
+
+      true
+    end
+
+    # returns the signature hash by removing the scriptSig and replacing it with
+    # the scriptPubKey of the corresponding input. This is the hash that is
+    # signed by the private key.
+    def sig_hash(index)
+      sig = Helpers::Encoding.to_bytes(@version, 4, "little")
+      sig << Helpers::Encoding.encode_varint(@tx_ins.length)
+
+      sig << @tx_ins.map.with_index do |tx_in, i|
+        tx_in.script_sig = tx_in.script_pubkey(testnet: @testnet) if i == index
+        tx_in.serialize
+      end.join
+
+      sig << Helpers::Encoding.encode_varint(@tx_outs.length)
+      sig << @tx_outs.map(&:serialize).join
+      sig << Helpers::Encoding.to_bytes(@locktime, 4, "little")
+      sig << Helpers::Encoding.to_bytes(SIGHASH_ALL, 4, "little")
+
+      Helpers::Hash.hash256(sig)
+    end
+
+    def verify_input(index)
+      tx_in = @tx_ins[index]
+      script_pubkey = tx_in.script_pubkey(testnet: @testnet)
+      z = sig_hash(index)
+      combined = tx_in.script_sig + script_pubkey
+
+      combined.evaluate(z)
+    end
+
+    def sign_input(index, privkey)
+      z = sig_hash(index)
+      der = privkey.sign(z).der
+      sig = der + Helpers::Encoding.to_bytes(SIGHASH_ALL, 1)
+      sec = privkey.point.sec
+      @tx_ins[index].script_sig = Script.new([sig, sec])
+      verify_input(index)
     end
 
     private
 
     def hash
       Helpers::Hash.hash256(serialize)
-    end
-
-    def serialize
-      raise NotImplementedError
     end
   end
 end

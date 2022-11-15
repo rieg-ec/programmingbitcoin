@@ -1,23 +1,27 @@
+require "uri"
+require "net/http"
+require "stringio"
+
 require_relative "../helpers/encoding"
 
 module Bitcoin
   class Fetcher
     include Helpers::Encoding
 
-    cache = {}
+    @@cache = {}
 
     def self.fetch(tx_id, testnet: false, fresh: false)
-      return cache[tx_id] unless fresh || cache[tx_id].nil?
+      return @@cache[tx_id] unless fresh || @@cache[tx_id].nil?
 
-      uri = UR.parse("#{base_url(testnet: testnet)}/tx/#{tx_id}/hex")
+      uri = URI.parse("#{base_url(testnet: testnet)}/tx/#{tx_id}/hex")
       response = Net::HTTP.get(uri)
-      from_hex_to_bytes(response)
+      raw = Helpers::Encoding.from_hex_to_bytes(response)
 
-      tx = Tx.parse(BytesIO(raw), testnet: testnet)
-      raise ValueError("not same id: #{tx.id} != #{tx_id}") if tx.id != tx_id
+      tx = Tx.parse(StringIO.new(raw), testnet: testnet)
+      raise StandardError, "not same id: #{tx.id} != #{tx_id}" if tx.id != tx_id
 
-      cache[tx_id] = tx
-      cache[tx_id].testnet = testnet
+      @@cache[tx_id] = tx
+      @@cache[tx_id].testnet = testnet
       tx
     end
 

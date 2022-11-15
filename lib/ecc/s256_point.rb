@@ -2,6 +2,7 @@ require_relative "point"
 require_relative "s256_field"
 require_relative "secp256k1_constants"
 require_relative "../helpers/encoding"
+require_relative "../helpers/hash"
 
 module ECC
   ##
@@ -22,6 +23,27 @@ module ECC
 
     # the generator point for secp256k1
     G = S256Point.new(Secp256k1Constants::G_X, Secp256k1Constants::G_Y)
+
+    def address(compressed: true, testnet: false)
+      prefix = testnet ? "\x6f" : "\x00"
+      Helpers::Encoding.base58_encode_checksum(
+        prefix + hash160(compressed: compressed)
+      )
+    end
+
+    # returns the bitcoin address for the given
+    # base58 encoded network prefix + address + checksum
+    def self.decode_address(base58_address)
+      address = Helpers::Encoding.decode_base58(base58_address)
+      combined = Helpers::Encoding.to_bytes(address, 25)
+      # checksum is last 4 bytes
+      checksum = combined[-4..-1]
+      computed_checksum = Helpers::Hash.hash256(combined[0..-5])[0..3]
+      raise "Invalid checksum" unless checksum == computed_checksum
+
+      # network prefix is the first byte
+      combined[1..-5]
+    end
 
     def scalar_multiply(num)
       num = num % Secp256k1Constants::N
@@ -73,6 +95,12 @@ module ECC
 
       # \x02 prefix byte means y is even, \x03 means y is odd
       sec_bin[0] == "\x02" ? new(x, y_even) : new(x, y_odd)
+    end
+
+    private
+
+    def hash160(compressed: true)
+      Helpers::Hash.hash160(sec(compressed: compressed))
     end
   end
 end
