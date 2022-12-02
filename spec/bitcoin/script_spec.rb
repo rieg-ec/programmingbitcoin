@@ -130,4 +130,20 @@ RSpec.describe Bitcoin::Script do
       expect(combined_script.evaluate(z)).to eq(true)
     end
   end
+
+  describe "#evaluate_redeem_script" do
+  end
+
+  describe "#redeem_script?" do
+  end
+
+  describe "#h160_to_p2pkh_address" do
+    it "returns the correct address" do
+    end
+  end
+
+  describe "#h160_to_p2sh_address" do
+    it "returns the correct address" do
+    end
+  end
 end

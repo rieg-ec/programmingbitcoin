@@ -84,12 +84,18 @@ module Bitcoin
     # returns the signature hash by removing the scriptSig and replacing it with
     # the scriptPubKey of the corresponding input. This is the hash that is
     # signed by the private key.
-    def sig_hash(index)
+    def sig_hash(index, redeem_script: nil)
       sig = Helpers::Encoding.to_bytes(@version, 4, "little")
       sig << Helpers::Encoding.encode_varint(@tx_ins.length)
 
       sig << @tx_ins.map.with_index do |tx_in, i|
-        tx_in.script_sig = tx_in.script_pubkey(testnet: @testnet) if i == index
+        if i == index
+          tx_in.script_sig = if redeem_script.present?
+                               redeem_script
+                             else
+                               tx_in.script_pubkey(testnet: @testnet)
+                             end
+        end
         tx_in.serialize
       end.join
 
@@ -104,7 +110,16 @@ module Bitcoin
     def verify_input(index)
       tx_in = @tx_ins[index]
       script_pubkey = tx_in.script_pubkey(testnet: @testnet)
-      z = sig_hash(index)
+
+      if script_pubkey.p2sh?
+        cmd = tx_in.script_sig.opcodes.last
+        raw_redeem = Helpers::Encoding.encode_varint(cmd.length) + cmd
+        redeem_script = Script.parse(StringIO.new(raw_redeem))
+      else
+        redeem_script = nil
+      end
+
+      z = sig_hash(index, redeem_script: redeem_script)
       combined = tx_in.script_sig + script_pubkey
 
       combined.evaluate(z)

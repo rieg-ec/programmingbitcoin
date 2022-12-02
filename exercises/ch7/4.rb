@@ -10,7 +10,6 @@ require_relative "../../lib/bitcoin/tx"
 require_relative "../../lib/helpers/encoding"
 require_relative "../../lib/helpers/io"
 require_relative "../../lib/bitcoin/script"
-require_relative "../../lib/bitcoin/tx"
 require_relative "../../lib/bitcoin/tx_in"
 
 raw_tx = Helpers::Encoding.from_hex_to_bytes("01000000011c5fb4a35c40647bcacfeffcb8686f1e9925774c07a1dd26f6551f67bcc4a1750100\

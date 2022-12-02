@@ -100,6 +100,9 @@ RSpec.describe Bitcoin::Tx do
     end
   end
 
+  describe "#serialize" do
+  end
+
   describe "#sig_hash" do
     let(:raw_tx) do
       "0100000001813f79011acb80925dfe69b3def355fe914bd1d96a3f5f71bf8303c6a989c7d1000000006b483045\

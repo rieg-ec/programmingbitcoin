@@ -79,6 +79,7 @@ module Bitcoin
           end
         else
           @stack << opcode
+          return evaluate_redeem_script(opcode, opcodes) if p2sh?
         end
       end
 
@@ -92,7 +93,30 @@ module Bitcoin
       new([118, 169, hash160, 136, 172])
     end
 
+    def p2sh?
+      @stack.length == 3 &&
+        @stack[0] == "\xa9" &&
+        @stack[1].length == 20 &&
+        @stack[2] == "\x87"
+    end
+
     private
+
+    def evaluate_redeem_script(opcode, opcodes)
+      @stack.pop # OP_HASH160
+      h160 = @stack.pop # public key
+      @stack.pop # OP_EQUAL
+      return false unless op_hash160
+
+      @stack << h160
+      return false unless op_equal
+      return false unless op_verify
+
+      redeem_script = Helpers::Encoding.encode_varint(@stack.length) + opcode
+      stream = Helpers::IO.new(redeem_script)
+      opcodes << self.class.parse(stream).opcodes
+      true
+    end
 
     def raw_serialize
       result = ""

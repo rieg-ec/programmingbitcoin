@@ -243,4 +243,38 @@ module Helpers
   def op_equalverify
     op_equal && op_verify
   end
+
+  # checks if m of n signatures are valid
+  def op_checkmultisig
+    return false if @stack.length < 1
+
+    n = decode_num(@stack.pop)
+    return false if @stack.length < n + 1
+
+    sec_pubkeys = []
+    n.times { sec_pubkeys << @stack.pop }
+
+    m = decode_num(@stack.pop)
+    return false if @stack.length < m + 1
+
+    der_signatures = []
+    m.times { der_signatures << @stack.pop }
+    @stack.pop # OP_0
+
+    begin
+      valid_signaturs = 0
+      sec_pubkeys.each do |sec_pk|
+        der_signatures.each do |der_sig|
+          pub_key = ECC::S256Point.new(sec_pk)
+          sig = ECC::Signature.new(der_sig)
+          pub_key.verify?(@z, sig) ? valid_signaturs += 1 : next
+        end
+      end
+
+      @stack << (valid_signaturs >= m ? 1 : 0)
+    rescue StandardError
+      return false
+    end
+    true
+  end
 end

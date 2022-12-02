@@ -24,6 +24,16 @@ module ECC
     # the generator point for secp256k1
     G = S256Point.new(Secp256k1Constants::G_X, Secp256k1Constants::G_Y)
 
+    def self.h160_to_p2pkh_address(h160, testnet: false)
+      prefix = testnet ? "\x6f" : "\x00"
+      Helpers::Encoding.base58_encode_checksum(prefix + h160)
+    end
+
+    def self.h160_to_p2sh_address(h160, testnet: false)
+      prefix = testnet ? "\xc4" : "\x05"
+      Helpers::Encoding.base58_encode_checksum(prefix + h160)
+    end
+
     def address(compressed: true, testnet: false)
       prefix = testnet ? "\x6f" : "\x00"
       Helpers::Encoding.base58_encode_checksum(
