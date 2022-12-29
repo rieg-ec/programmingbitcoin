@@ -4,6 +4,17 @@ module Helpers
   module Encoding
     BASE58_ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 
+    def self.included(base)
+      # remove included from methods
+      class_methods = methods(false).reject { |m| m == :included }
+      class_methods.each do |method|
+        # define instance method to be able to call class methods as instance methods
+        base.define_method(method) do |*args|
+          Helpers::Encoding.send(method, *args)
+        end
+      end
+    end
+
     # convert a number to a byte string
     def self.to_bytes(integer, bytes, endianness = "big")
       byte_array = [0] * bytes
@@ -21,6 +32,7 @@ module Helpers
       bytes.map.with_index { |byte, index| byte * 256**index }.sum
     end
 
+    # convert a hexadecimal number into a byte string
     def self.from_hex_to_bytes(hex)
       [hex.strip].pack("H*")
     end
@@ -33,9 +45,25 @@ module Helpers
       from_bytes(from_hex_to_bytes(hex))
     end
 
+    def self.from_int_to_hex(integer, bytes, endianness = "big")
+      from_bytes_to_hex(to_bytes(integer, bytes, endianness))
+    end
+
+    def self.string_to_bytes(string)
+      bytes = string.bytes.map { |byte| byte.to_s(16).rjust(2, "0") }.join
+    end
+
+    def self.bytes_to_string(bytes, endiannes = "big")
+      if endiannes == "big"
+        bytes.scan(/../).map(&:hex).pack("c*")
+      else
+        bytes.scan(/../).map(&:hex).reverse.pack("c*")
+      end
+    end
+
     def self.base58_encode(str)
       count = 0
-      str.each_char { |c| count += 1 if c == 0 }
+      str.each_char { |c| count += 1 if c.zero? }
       prefix = "1" * count
 
       num = from_bytes(str)

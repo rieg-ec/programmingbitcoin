@@ -19,6 +19,10 @@ module Bitcoin
       "#{@prev_tx_id.unpack1("H*")}:#{@prev_tx_index}"
     end
 
+    def coinbase?
+      @prev_tx_id == "\x00" * 32 && @prev_tx_index == 0xffffffff
+    end
+
     def fetch_tx(testnet: false)
       Fetcher.fetch(
         Helpers::Encoding.from_bytes_to_hex(@prev_tx_id),

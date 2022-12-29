@@ -81,6 +81,17 @@ module Bitcoin
       true
     end
 
+    def coinbase?
+      @tx_ins.length == 1 && @tx_ins.first.coinbase?
+    end
+
+    # coinbase height comes as the first opcode in the scriptSig
+    def coinbase_height
+      return nil unless coinbase?
+
+      Helpers::Encoding.from_bytes(@tx_ins.first.script_sig.chunks[0], "little")
+    end
+
     # returns the signature hash by removing the scriptSig and replacing it with
     # the scriptPubKey of the corresponding input. This is the hash that is
     # signed by the private key.
@@ -90,7 +101,7 @@ module Bitcoin
 
       sig << @tx_ins.map.with_index do |tx_in, i|
         if i == index
-          tx_in.script_sig = if redeem_script.present?
+          tx_in.script_sig = if redeem_script
                                redeem_script
                              else
                                tx_in.script_pubkey(testnet: @testnet)
