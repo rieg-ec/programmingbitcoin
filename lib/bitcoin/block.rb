@@ -1,5 +1,15 @@
+require_relative "../helpers/encoding"
+
 module Bitcoin
   class Block
+    include Helpers::Encoding
+
+    GENESIS_BLOCK = Helpers::Encoding.from_hex_to_bytes("0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a29ab5f49ffff001d1dac2b7c")
+    TESTNET_GENESIS_BLOCK = Helpers::Encoding.from_hex_to_bytes("0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4adae5494dffff001d1aa4ae18")
+    LOWEST_BITS = Helpers::Encoding.from_hex_to_bytes("ffff001d")
+
+    attr_reader :version, :prev_block, :merkle_root, :timestamp, :bits, :nonce
+
     def initialize(version:, prev_block:, merkle_root:, timestamp:, bits:, nonce:)
       @version = version
       @prev_block = prev_block
@@ -24,8 +34,8 @@ module Bitcoin
       prev_block = io.read_le(32)
       merkle_root = io.read_le(32)
       timestamp = io.read_le_int32
-      bits = io.read_le_int32
-      nonce = io.read_le_int32
+      bits = io.read(4)
+      nonce = io.read(4)
 
       new(
         version: version,
@@ -38,12 +48,12 @@ module Bitcoin
     end
 
     def serialize
-      result = Helpers::Encoding.to_bytes(@version, 4, "little")
+      result = to_bytes(@version, 4, "little")
       result << @prev_block.reverse
       result << @merkle_root.reverse
-      result << Helpers::Encoding.to_bytes(@timestamp, 4, "little")
-      result << Helpers::Encoding.to_bytes(@bits, 4, "little")
-      result << Helpers::Encoding.to_bytes(@nonce, 4, "little")
+      result << to_bytes(@timestamp, 4, "little")
+      result << to_bytes(@bits, 4, "little")
+      result << to_bytes(@nonce, 4, "little")
       result
     end
 
