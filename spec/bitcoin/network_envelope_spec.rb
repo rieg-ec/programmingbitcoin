@@ -2,6 +2,7 @@
 
 require "bitcoin/network_envelope"
 require "helpers/encoding"
+require "helpers/io"
 
 RSpec.describe Bitcoin::NetworkEnvelope do
   include Helpers::Encoding
@@ -9,7 +10,7 @@ RSpec.describe Bitcoin::NetworkEnvelope do
   let(:raw_envelope) { from_hex_to_bytes("f9beb4d976657261636b000000000000000000005df6e0e2") }
 
   def parse(_raw_envelope)
-    described_class.parse(StringIO.new(_raw_envelope))
+    described_class.parse(Helpers::IO.new(_raw_envelope))
   end
 
   describe ".parse" do

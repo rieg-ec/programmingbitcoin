@@ -32,7 +32,7 @@ module Bitcoin
 
     def read_envelope
       begin
-        envelope = NetworkEnvelope.parse(@socket)
+        envelope = NetworkEnvelope.parse(Helpers::IO.new(@socket))
       rescue IOError
         puts "no data received" if @logging
         return nil
@@ -58,10 +58,14 @@ module Bitcoin
         command = envelope.command
         puts "command received: #{command}" if @logging
         send(VerackMessage.new) if command == "version"
-        send(PongMessage.new) if command == "ping"
       end
 
       command_to_class[command].parse(envelope.stream)
+    end
+
+    def handshake
+      send(VersionMessage.new)
+      wait_for(VerackMessage)
     end
 
     def close

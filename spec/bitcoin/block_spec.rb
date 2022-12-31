@@ -35,6 +35,18 @@ RSpec.describe Bitcoin::Block do
     it { expect(difficulty).to eq(888_171_856_257.3206) }
   end
 
+  describe "#pow_valid?" do
+    context "with valid PoW" do
+      it { expect(block_header.pow_valid?).to be true }
+    end
+
+    context "with invalid PoW" do
+      before { block_header.nonce = from_hex_to_bytes("00000000") }
+
+      it { expect(block_header.pow_valid?).to be false }
+    end
+  end
+
   describe ".parse" do
     def parse(*args)
       described_class.parse(Helpers::IO.new(*args))

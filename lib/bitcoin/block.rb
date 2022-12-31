@@ -8,7 +8,7 @@ module Bitcoin
     TESTNET_GENESIS_BLOCK = Helpers::Encoding.from_hex_to_bytes("0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4adae5494dffff001d1aa4ae18")
     LOWEST_BITS = Helpers::Encoding.from_hex_to_bytes("ffff001d")
 
-    attr_reader :version, :prev_block, :merkle_root, :timestamp, :bits, :nonce
+    attr_accessor :version, :prev_block, :merkle_root, :timestamp, :bits, :nonce
 
     def initialize(version:, prev_block:, merkle_root:, timestamp:, bits:, nonce:)
       @version = version
@@ -52,8 +52,8 @@ module Bitcoin
       result << @prev_block.reverse
       result << @merkle_root.reverse
       result << to_bytes(@timestamp, 4, "little")
-      result << to_bytes(@bits, 4, "little")
-      result << to_bytes(@nonce, 4, "little")
+      result << @bits
+      result << @nonce
       result
     end
 
@@ -74,11 +74,18 @@ module Bitcoin
     end
 
     def difficulty
-      0xffff * 256**(0x1d - 3) / bits_to_target.to_f
+      0xffff * 256**(0x1d - 3) / target.to_f
     end
 
-    def check_pow
-      Helpers::Encoding.from_bytes(hash, "little") < target(@bits)
+    # this method is not tested, may be wrong
+    def target
+      exponent = Helpers::Encoding.from_bytes(@bits[-1], "little")
+      coefficient = Helpers::Encoding.from_bytes(@bits[0..-2], "little")
+      coefficient * 256**(exponent - 3)
+    end
+
+    def pow_valid?
+      Helpers::Encoding.from_bytes(hash, "little") <= target
     end
   end
 end

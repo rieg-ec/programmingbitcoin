@@ -1,5 +1,6 @@
 require_relative "../helpers/encoding"
 require_relative "../helpers/hash"
+require_relative "../helpers/io"
 
 module Bitcoin
   class NetworkEnvelope
@@ -37,13 +38,11 @@ module Bitcoin
     end
 
     def stream
-      StringIO.new(@payload)
+      Helpers::IO.new(@payload)
     end
 
     # rubocop:disable Metrics/MethodLength
-    def self.parse(stream)
-      io = Helpers::IO.new(stream)
-
+    def self.parse(io)
       magic = io.read(4)
       raise IOError, "no data received" if magic.nil?
 

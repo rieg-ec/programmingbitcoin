@@ -4,6 +4,9 @@ module Helpers
   module Encoding
     BASE58_ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 
+    # after writing this i learnt that it's better to define methods
+    # as instance methods and then using extend to make them class methods,
+    # but i'll leave it like this anyways to avoid the refactoring needed to change it
     def self.included(base)
       # remove included from methods
       class_methods = methods(false).reject { |m| m == :included }
