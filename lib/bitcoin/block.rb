@@ -10,13 +10,22 @@ module Bitcoin
 
     attr_accessor :version, :prev_block, :merkle_root, :timestamp, :bits, :nonce
 
-    def initialize(version:, prev_block:, merkle_root:, timestamp:, bits:, nonce:)
+    def initialize(
+      version:,
+      prev_block:,
+      merkle_root:,
+      timestamp:,
+      bits:,
+      nonce:,
+      tx_hashes: []
+    )
       @version = version
       @prev_block = prev_block
       @merkle_root = merkle_root
       @timestamp = timestamp
       @bits = bits
       @nonce = nonce
+      @tx_hashes = tx_hashes
     end
 
     def self.target(bytestring)
@@ -45,6 +54,11 @@ module Bitcoin
         bits: bits,
         nonce: nonce
       )
+    end
+
+    def merkle_root_valid?
+      computed_merkle_root = MerkleTree.merkle_root(@tx_hashes.map(&:reverse))
+      computed_merkle_root.reverse == @merkle_root
     end
 
     def serialize

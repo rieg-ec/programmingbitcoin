@@ -76,4 +76,7 @@ RSpec.describe Bitcoin::Block do
       expect(parse(raw_block_header).nonce).to eq block_header.nonce
     end
   end
+
+  describe "#merkle_root_valid?" do
+  end
 end
