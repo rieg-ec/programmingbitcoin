@@ -110,5 +110,16 @@ module Helpers
       io = Helpers::IO.new(stream)
       io.read_varint
     end
+
+    def self.bit_field_to_bytes(bit_field)
+      raise EncodingError, "bit_field's length is not divisible by 8" if bit_field.length % 8 != 0
+
+      result = [0] * (bit_field.length / 8)
+      bit_field.each_with_index do |bit, index|
+        byte_index, bit_index = index.divmod(8)
+        result[byte_index] |= 1 << bit_index unless bit.zero?
+      end
+      result.pack("c*")
+    end
   end
 end

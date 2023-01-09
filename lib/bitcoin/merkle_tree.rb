@@ -76,6 +76,10 @@ module Bitcoin
       # @TODO
     end
 
+    def root
+      @nodes[0][0]
+    end
+
     private
 
     def handle_leaf(flag_bits, hashes)
@@ -114,10 +118,6 @@ module Bitcoin
     def right
       @current_depth += 1
       @current_index = @current_index * 2 + 1
-    end
-
-    def root
-      @nodes[0][0]
     end
 
     def set_current_node(value)
