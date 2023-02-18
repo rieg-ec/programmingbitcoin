@@ -66,7 +66,7 @@ module Helpers
 
     def self.base58_encode(str)
       count = 0
-      str.each_char { |c| count += 1 if c.zero? }
+      str.each_char { |c| count += 1 if c == "\x00" }
       prefix = "1" * count
 
       num = from_bytes(str)
